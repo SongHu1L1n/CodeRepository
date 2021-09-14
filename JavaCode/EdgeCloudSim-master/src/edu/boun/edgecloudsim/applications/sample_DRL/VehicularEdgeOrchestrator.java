@@ -15,6 +15,10 @@ import edu.boun.edgecloudsim.utils.SimUtils;
 import org.cloudbus.cloudsim.Vm;
 import org.cloudbus.cloudsim.core.SimEvent;
 
+import java.io.*;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
 public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
 
     private static final int BASE = 100000; //start from base in order not to conflict cloudsim tag!
@@ -101,10 +105,6 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
 
         }else if (policy.equals("DRL")){
 
-            int cnt = 0;
-            for(int i = 0; i < 1000000000; i++){
-                cnt += i;
-            }
             double SPEED_ON_THE_ROAD[] = {20, 40, 60};
             // 任务延迟要求
             double max_delay_require = SimSettings.getInstance().getTaskLookUpTable()[task.getTaskType()][13];
@@ -129,18 +129,13 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
             double wan_up_and_down_load_delay = wanUploadDelay + wanDownloadDelay;
             double gsm_up_and_down_load_delay = gsmUploadDelay + gsmDownloadDelay;
             /*4*/
-            double expectedProcessingDelayOnEdge = task.getCloudletLength() / SimManager.getInstance().getEdgeServerManager().getVmList(0).get(0).getMips();
-            double expectedProcessingDelayOnCloud = task.getCloudletLength() / SimSettings.getInstance().getMipsForCloudVM(); //云上的预期处理时间
+            double expectedProcessingDelayOnEdge = (double)task.getCloudletLength() / (double)SimManager.getInstance().getEdgeServerManager().getVmList(0).get(0).getMips();
+            double expectedProcessingDelayOnCloud = (double) task.getCloudletLength() / (double)SimSettings.getInstance().getMipsForCloudVM(); //云上的预期处理时间
+//            System.out.println("task.getCloudletLength(): " + task.getCloudletLength() + ", mips: " +
+//                    SimSettings.getInstance().getMipsForCloudVM() + ", expectedProcessingDelayOnCloud: "
+//                    + expectedProcessingDelayOnCloud + ", 手动测试结果: " + task.getCloudletLength() / SimSettings.getInstance().getMipsForCloudVM());
+//            System.out.println();
 
-/*
-            // 获取位置
-            Location currentLocation = SimManager.getInstance().getMobilityModel().
-                    getLocation(task.getMobileDeviceId(), CloudSim.clock());
-            // 获取当时速度
-
-           double speed_1 = SPEED_ON_THE_ROAD[currentLocation.getPlaceTypeIndex()]; // Km/h
-
- */
 //            SimSettings.getInstance().getTaskLookUpTable();
 //            SimManager.getInstance().getEdgeServerManager().getVmList(0).
 
@@ -149,6 +144,81 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
                     wanUploadDelay + wanDownloadDelay + expectedProcessingDelayOnCloud,
                     gsmUploadDelay + gsmDownloadDelay + expectedProcessingDelayOnCloud
             };
+
+
+            // 先建立通信连接, 再传输文件信息，传输完成，从socket接收结果
+
+            try {
+                Socket socket = new Socket("192.168.66.1",7777);
+                // 向INFO传输基础信息
+                //******************************************************************************************************
+                String info = "E:\\CodeRepository\\JavaCode\\EdgeCloudSim-master\\scripts\\sample_DRL\\config\\info.txt";
+                File file = new File(info);
+                if(!file.exists()){
+                    try {
+                        file.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                int k = 0;
+                while (file.length() != 0){
+                    k++;
+                };
+                try {
+                    FileWriter fw = new FileWriter(file);
+                    fw.write(String.valueOf(taskType) + "\n");
+                    fw.write(String.valueOf(speed) + "\n");
+                    fw.write(String.valueOf(wlan_up_and_down_load_delay) + "\n");
+                    fw.write(String.valueOf(wan_up_and_down_load_delay) + "\n");
+                    fw.write(String.valueOf(gsm_up_and_down_load_delay) + "\n");
+                    fw.write(String.valueOf(expectedProcessingDelayOnEdge) + "\n");
+                    fw.write(String.valueOf(expectedProcessingDelayOnCloud));
+                    fw.flush();
+                    fw.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //******************************************************************************************************
+
+                //获取输出流，向服务器端发送信息
+                OutputStream os = socket.getOutputStream();//字节输出流
+                PrintWriter pw = new PrintWriter(os);//将输出流包装为打印流
+                pw.write("我是Java客户端");
+                pw.flush();
+//                System.out.println(1);
+                socket.shutdownOutput();//关闭输出流
+//                System.out.println(2);
+
+                InputStream is = socket.getInputStream();
+                byte[] b = new byte[1024];
+                is.read(b);
+                String s = new String(b);
+                StringBuilder sb = new StringBuilder();
+                for(int i = 0; i < s.length(); i++){
+                    if(s.charAt(i) == '_' || s.charAt(i) >= 'A' && s.charAt(i) <= 'Z'){
+                        sb.append(s.charAt(i));
+                    }
+                }
+                String res = sb.toString();
+
+//            BufferedReader in = new BufferedReader(new InputStreamReader(is));
+//            System.out.println(3);
+//            String info = null;
+//                System.out.println(4);
+                is.close();
+//            in.close();
+                socket.close();
+            } catch (UnknownHostException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // 通过socket 从pycharm接收结果
+
+
 //            System.out.println("****************************************");
             result = 3;
 

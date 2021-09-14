@@ -3,7 +3,6 @@ from gym import spaces
 import numpy as np
 
 import stable_baselines3
- #6...
 
 
 class Task2DEnv(gym.Env):
@@ -12,27 +11,28 @@ class Task2DEnv(gym.Env):
         'video.frames_per_second': 2
     }
 
-    def __init__(self):
-        self.taskType = 0
-        self.speed = 0
+    def __init__(self, task_type, speed, wlan_up_and_down_load_delay, wan_up_and_down_load_delay,
+                 gsm_up_and_down_load_delay, expected_processing_delay_on_edge, expected_processing_delay_on_cloud):
+        self.taskType = task_type
+        self.speed = speed
 
         # Edge
         '''
             先放三种延迟，再放预计处理时间
         '''
-        self.wlan_up_and_down_load_delay = 0
-        self.expectedProcessingDelayOnEdge = 0
+        self.wlan_up_and_down_load_delay = wlan_up_and_down_load_delay
+        self.expectedProcessingDelayOnEdge = expected_processing_delay_on_edge
 
         # Cloud_via_RSU
-        self.wan_up_and_down_load_delay = 0
-        self.expectedProcessingDelayOnCloud = 0
+        self.wan_up_and_down_load_delay = wan_up_and_down_load_delay
+        self.expectedProcessingDelayOnCloud = expected_processing_delay_on_cloud
 
         # Cloud_via_GSM
-        self.gsm_up_and_down_load_delay = 0
+        self.gsm_up_and_down_load_delay = gsm_up_and_down_load_delay
 
         self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Discrete(2)
-        self.state = None
+        self.state = 0
 
     # 给出下一时刻的状态、当前动作的回报
     def step(self, action):
@@ -68,7 +68,7 @@ class Task2DEnv(gym.Env):
 
         W = (required_max_delay[self.taskType] - delay) / required_max_delay[self.taskType]
         Q = 0.65 * E + (1 - 0.65) * F
-        self.state = (self.speed, Q)
+        # self.state = (self.speed, Q)
         return self.state, W, True, {}  # 是否结束当前episode, 及调试信息
 
     def reset(self):
@@ -80,3 +80,12 @@ class Task2DEnv(gym.Env):
     def close(self):
         return None
 
+
+def connect_with_idea():
+    import socket
+
+
+if __name__ == '__main__':
+    from stable_baselines3.common.env_checker import check_env
+    env = Task2DEnv(0, 0, 0, 0, 0, 0, 0)
+    check_env(env)
