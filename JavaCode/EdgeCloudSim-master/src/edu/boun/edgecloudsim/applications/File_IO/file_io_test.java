@@ -54,9 +54,9 @@ public class file_io_test {
     // 联调测试
     @Test
     public void socket_with_python_test(){
-        for(int j = 0; j < 10; j++){
+        for(int j = 0; j < 100; j++){
             try {
-                Socket socket = new Socket("192.168.66.1",7777);
+                Socket socket = new Socket("192.168.66.1",8989);
                 // 向INFO传输基础信息
                 //******************************************************************************************************
                 File file = new File(info);

@@ -20,6 +20,7 @@ class Task2DEnv(gym.Env):
         '''
             先放三种延迟，再放预计处理时间
         '''
+
         self.wlan_up_and_down_load_delay = wlan_up_and_down_load_delay
         self.expectedProcessingDelayOnEdge = expected_processing_delay_on_edge
 
@@ -53,8 +54,11 @@ class Task2DEnv(gym.Env):
         reward = 0
         # 能量消耗
         if action == 0:
+            # 能量消耗
             E = f[0] * self.expectedProcessingDelayOnEdge + bandwidth[0] * self.wlan_up_and_down_load_delay
-            F = (input_file_size[self.taskType] + output_file_size[self.taskType] * 1024) / storage[0]  # 只需要任务类型
+            # 费用消耗 占比
+            # M = self.expectedProcessingDelayOnEdge * self.edgeUtilization * storage[0]
+            F = (input_file_size[self.taskType] + output_file_size[self.taskType] * 1024) / storage[0]  # 计算资源使用率
             delay = self.expectedProcessingDelayOnEdge + self.wlan_up_and_down_load_delay
         elif action == 1:
             E = f[1] * self.expectedProcessingDelayOnCloud + bandwidth[1] * self.wan_up_and_down_load_delay
@@ -68,7 +72,8 @@ class Task2DEnv(gym.Env):
 
         W = (required_max_delay[self.taskType] - delay) / required_max_delay[self.taskType]
         Q = 0.65 * E + (1 - 0.65) * F
-        # self.state = (self.speed, Q)
+        # self.state = np.array([np.array(Q), np.array(self.speed)])
+        self.state = self.speed
         return self.state, W, True, {}  # 是否结束当前episode, 及调试信息
 
     def reset(self):
@@ -86,6 +91,22 @@ def connect_with_idea():
 
 
 if __name__ == '__main__':
-    from stable_baselines3.common.env_checker import check_env
-    env = Task2DEnv(0, 0, 0, 0, 0, 0, 0)
-    check_env(env)
+    env = Task2DEnv(0, 40.0, 0.031355943741745745, 0.006117192530585962, 0.027207457053519783, 0.2791, 0.037213333333333334)
+    from stable_baselines import deepq
+    model = deepq.DQN(policy='MlpPolicy', env=env)
+    model.learn(total_timesteps=10000)
+
+    obs = env.reset()
+    for _ in range(10):
+        action, state = model.predict(observation=obs)
+        print(action)
+        obs, reward, done, info = env.step(action)
+        env.render()
+
+
+
+
+    # from stable_baselines3.common.env_checker import check_env
+    # env = Task2DEnv(0, 0, 0, 0, 0, 0, 0)
+    # check_env(env)
+

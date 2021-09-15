@@ -231,8 +231,8 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
 		}
 		else if (policy.equals("MAB")) {
 			if(!MAB.isInitialized()){
-				double expectedProcessingDealyOnCloud = task.getCloudletLength() /
-						SimSettings.getInstance().getMipsForCloudVM();
+				double expectedProcessingDealyOnCloud = (double) task.getCloudletLength() /
+						(double) SimSettings.getInstance().getMipsForCloudVM();
 
 				//All Edge VMs are identical, just get MIPS value from the first VM
 				double expectedProcessingDealyOnEdge = task.getCloudletLength() /
@@ -258,7 +258,7 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
 			double expectedEdgeDelay = expectedProcessingDealyOnEdge + 
 					wlanUploadDelay + wlanDownloadDelay;
 
-			double expectedProcessingDealyOnCloud = task.getCloudletLength() /
+			double expectedProcessingDealyOnCloud = (double) task.getCloudletLength() /
 					SimSettings.getInstance().getMipsForCloudVM();
 
 			expectedProcessingDealyOnCloud *= 100 / (100 - avgCloudUtilization);

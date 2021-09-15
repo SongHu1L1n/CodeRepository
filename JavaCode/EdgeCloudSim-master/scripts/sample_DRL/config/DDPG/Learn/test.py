@@ -1,37 +1,94 @@
 import gym
 from gym import spaces
+import numpy as np
+
+import stable_baselines3
 
 
-class MySim(gym.Env):
-    def __init__(self):
-        self.action_space = spaces.Discrete(5)
+class Task2DEnv(gym.Env):
+    metadata = {
+        'render.modes': ['human', 'rgb_array'],
+        'video.frames_per_second': 2
+    }
+
+    def __init__(self, task_type, speed, wlan_up_and_down_load_delay, wan_up_and_down_load_delay,
+                 gsm_up_and_down_load_delay, expected_processing_delay_on_edge, expected_processing_delay_on_cloud):
+        self.taskType = task_type
+        self.speed = speed
+
+        # Edge
+        '''
+            先放三种延迟，再放预计处理时间
+        '''
+
+        self.wlan_up_and_down_load_delay = wlan_up_and_down_load_delay
+        self.expectedProcessingDelayOnEdge = expected_processing_delay_on_edge
+
+        # Cloud_via_RSU
+        self.wan_up_and_down_load_delay = wan_up_and_down_load_delay
+        self.expectedProcessingDelayOnCloud = expected_processing_delay_on_cloud
+
+        # Cloud_via_GSM
+        self.gsm_up_and_down_load_delay = gsm_up_and_down_load_delay
+
+        self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Discrete(2)
+        self.state = 0
 
+    # 给出下一时刻的状态、当前动作的回报
     def step(self, action):
-        state = 1
 
-        if action == 2:
-            reward = 1
+        '''
+            action :0, 1, 2 分别表示 EDGE_DATACENTER， CLOUD_DATACENTER_VIA_RSU， CLOUD_DATACENTER_VIA_GSM
+        '''
+
+        # 已知信息
+        required_max_delay = [0.5, 1.0, 1.5]  # 三个任务的最大延迟要求
+        bandwidth = [10, 50, 20]  # 带宽       edge rsu  gsm 根据action选择
+        # costs = [0.5, 1, 1]
+        storage = [125000, 2500000, 2500000]  # VM存储
+        input_file_size = [20, 40, 20]
+        output_file_size = [20, 20, 80]
+        f = [0, 0, 0]  # CPU频率
+
+        reward = 0
+        # 能量消耗
+        if action == 0:
+            # 能量消耗
+            E = f[0] * self.expectedProcessingDelayOnEdge + bandwidth[0] * self.wlan_up_and_down_load_delay
+            # 费用消耗 占比
+            # M = self.expectedProcessingDelayOnEdge * self.edgeUtilization * storage[0]
+            F = (input_file_size[self.taskType] + output_file_size[self.taskType] * 1024) / storage[0]  # 计算资源使用率
+            delay = self.expectedProcessingDelayOnEdge + self.wlan_up_and_down_load_delay
+        elif action == 1:
+            E = f[1] * self.expectedProcessingDelayOnCloud + bandwidth[1] * self.wan_up_and_down_load_delay
+            F = (input_file_size[self.taskType] + output_file_size[self.taskType] * 1024) / storage[1]
+            delay = self.expectedProcessingDelayOnCloud + self.wan_up_and_down_load_delay
         else:
-            reward = -1
-        done = True
-        info = {}
-        return state, reward, done, info
+            E = f[2] * self.expectedProcessingDelayOnEdge + bandwidth[0] * self.gsm_up_and_down_load_delay
+            F = (input_file_size[self.taskType] + output_file_size[self.taskType] * 1024) / storage[0]
+            delay = self.expectedProcessingDelayOnCloud + self.gsm_up_and_down_load_delay
+        # speed快 选择云
+
+        W = (required_max_delay[self.taskType] - delay) / required_max_delay[self.taskType]
+        Q = 0.65 * E + (1 - 0.65) * F
+        # self.state = np.array([np.array(Q), np.array(self.speed)])
+        self.state = self.speed
+        return self.state, W, True, {}  # 是否结束当前episode, 及调试信息
 
     def reset(self):
-        state = 0
-        return state
+        return self.state
 
     def render(self, mode='human'):
         pass
 
-    def seed(self, seed=None):
-        pass
+    def close(self):
+        return None
 
 
 if __name__ == '__main__':
     #
-    # from stable_baselines import deepq
+    from stable_baselines import deepq
     # from stable_baselines import PPO2
 
     # 接收基础参数，进行训练
@@ -42,7 +99,7 @@ if __name__ == '__main__':
     import socket
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(("192.168.66.1", 7777))
+        sock.bind(("192.168.66.1", 8989))
         sock.listen(5)
     except:
         print("init socket error!")
@@ -79,25 +136,30 @@ if __name__ == '__main__':
         conn.settimeout(30)
         szBuf = conn.recv(1024)
         print("recv:" + str(szBuf, 'utf8'))
+        action = 1
 
         # # 模型训练
-        # env = MySim()
+        # env = Task2DEnv(task_type, speed, wlan_up_and_down_load_delay, wan_up_and_down_load_delay, gsm_up_and_down_load_delay, expected_processing_delay_on_dge, expected_processing_delay_on_cloud)
         # model = deepq.DQN(policy='MlpPolicy', env=env)
         # model.learn(total_timesteps=1000)
         # obs = env.reset()
+        # action = -1
         # for _ in range(10):
-        #     action, state = model.predict(observation=obs)
-        #     print("action: ", action, ", state: ", state)
-        #     obs, reward, done, info = env.step(action)
+        #     _action, state = model.predict(observation=obs)
+        #     action = _action
+        #     print(action)
+        #     obs, reward, done, info = env.step(_action)
         #     env.render()
 
         # 得到训练结果， 传输回去
-        if "0" == szBuf:
-            conn.send(b"exit")
-        else:
+        if action == 0:
             result = 'EDGE_DATACENTER'
-            # conn.send(bytes(20))
-            conn.send(result.encode())
+        elif action == 1:
+            result = 'CLOUD_DATACENTER_VIA_RSU'
+        elif action == 2:
+            result = 'CLOUD_DATACENTER_VIA_GSM'
+        # conn.send(bytes(20))
+        conn.send(result.encode())
 
     conn.close()
     print("end of servive")

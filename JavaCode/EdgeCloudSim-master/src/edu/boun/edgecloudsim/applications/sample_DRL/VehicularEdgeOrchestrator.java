@@ -6,6 +6,7 @@ package edu.boun.edgecloudsim.applications.sample_DRL;
 //import edu.boun.edgecloudsim.applications.sample_app5.OrchestratorStatisticLogger;
 //import edu.boun.edgecloudsim.applications.sample_app5.OrchestratorTrainerLogger;
 //import edu.boun.edgecloudsim.applications.sample_app5.VehicularNetworkModel;
+
 import edu.boun.edgecloudsim.core.SimManager;
 import edu.boun.edgecloudsim.core.SimSettings;
 import edu.boun.edgecloudsim.edge_client.Task;
@@ -145,11 +146,9 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
                     gsmUploadDelay + gsmDownloadDelay + expectedProcessingDelayOnCloud
             };
 
-
-            // 先建立通信连接, 再传输文件信息，传输完成，从socket接收结果
-
+            // 先建立通信连接, 再传输文件信息，传输完成，从socket接收结
             try {
-                Socket socket = new Socket("192.168.66.1",7777);
+                Socket socket = new Socket("192.168.66.1",8989);
                 // 向INFO传输基础信息
                 //******************************************************************************************************
                 String info = "E:\\CodeRepository\\JavaCode\\EdgeCloudSim-master\\scripts\\sample_DRL\\config\\info.txt";
@@ -186,9 +185,7 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
                 PrintWriter pw = new PrintWriter(os);//将输出流包装为打印流
                 pw.write("我是Java客户端");
                 pw.flush();
-//                System.out.println(1);
                 socket.shutdownOutput();//关闭输出流
-//                System.out.println(2);
 
                 InputStream is = socket.getInputStream();
                 byte[] b = new byte[1024];
@@ -201,13 +198,14 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
                     }
                 }
                 String res = sb.toString();
-
-//            BufferedReader in = new BufferedReader(new InputStreamReader(is));
-//            System.out.println(3);
-//            String info = null;
-//                System.out.println(4);
+                if(res.equals("EDGE_DATACENTER")){
+                    result = EDGE_DATACENTER;
+                }else if(res.equals("CLOUD_DATACENTER_VIA_RSU")){
+                    result = CLOUD_DATACENTER_VIA_RSU;
+                }else if(res.equals("CLOUD_DATACENTER_VIA_GSM")){
+                    result = CLOUD_DATACENTER_VIA_GSM;
+                }
                 is.close();
-//            in.close();
                 socket.close();
             } catch (UnknownHostException e) {
                 // TODO Auto-generated catch block
@@ -215,23 +213,10 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            // 通过socket 从pycharm接收结果
-
-
-//            System.out.println("****************************************");
-            result = 3;
-
         } else {
             SimLogger.printLine("Unknow edge orchestrator policy! Terminating simulation...");
             System.exit(1);
         }
-
-        /*
-        * 读取结果
-        * */
-
-//        result = 3;
         return result;
 
     }

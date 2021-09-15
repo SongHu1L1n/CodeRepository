@@ -1,64 +1,53 @@
 package com.company;
 
+import org.junit.Test;
+
 import java.util.*;
 
 public class Main {
-    public static void main(String[] args) {
-	// write your code here
-       int num = 10;
-//        System.out.println(num / 3);
-//        System.out.println(25 % 11);
-        List<Integer> list = new ArrayList();
-        list.add(1);
-        System.out.println(1 == list.get(0));
-
-
+    int max, maxIdx;
+    public int findPeakElement(int[] nums) {
+        max = Integer.MIN_VALUE;
+        maxIdx = -1;
+        int l = 0, r = nums.length - 1;
+        find(nums, l, r);
+        return maxIdx;
     }
-    public boolean robot(String command, int[][] obstacles, int x, int y) {
-        int[] right_now = new int[]{0, 0}, terminal = new int[]{x, y};
-        if(x == 0 && y == 0){
-            return true;
-        }
-        // if(obstacles == null || obstacles.length == 0){
-        //     for(int i = 0; i < command.length(); i++){
-        //         if(command.charAt(i) == 'U'){
-        //             right_now[1]++;
-        //         }else{
-        //             right_now[0]++;
-        //         }
-        //     }
-        //     return right_now[0] == terminal[0] && right_now[1] == terminal[1];
-        // }
-        Map<Integer, List<Integer>> map = new HashMap<>();
-        for(int[] obstacle: obstacles){
-            List list =  map.getOrDefault(obstacle[0], new ArrayList<>());
-            list.add(obstacle[1]);
-            map.put(obstacle[0], list);
-        }
-        int i = 0;
-        while(true){
-            if(command.charAt(i) == 'U'){
-                right_now[1]++;
-            }else{
-                right_now[0]++;
-            }
 
-            if(map.containsKey(right_now[0])){
-                List list = map.get(right_now[0]);
-                for(int j = 0; j < list.size(); j++){
-                    if(right_now[1] == (int)list.get(j)){
-                        return false;
-                    }
-                }
-            }
-            if(right_now[0] > terminal[0] || right_now[1] > terminal[1]){
-                return false;
-            }
-            if(right_now[0] == terminal[0] && right_now[1] == terminal[1]){
-                return true;
-            }
-            i = (i + 1) % command.length();
+    void find(int[] nums, int l, int r){
+        if(l < 0 || r > nums.length - 1 || l > r){
+            return ;
         }
+        int mid = l + (r - l) / 2;
+        if(mid == l){
+            if(nums[mid] > nums[mid + 1]){
+                maxIdx = nums[mid] > max ? mid: maxIdx;
+                max = Math.max(max, nums[mid]);
+            }
+        }else if(mid == r){
+            if(nums[mid] > nums[mid - 1]){
+                maxIdx = nums[mid] > max ? mid: maxIdx;
+                max = Math.max(max, nums[mid]);
+            }
+        }else{
+            if(nums[mid] > nums[mid - 1] && nums[mid] > nums[mid + 1]){ // 峰值
+                maxIdx = nums[mid] > max ? mid: maxIdx;
+                max = Math.max(max, nums[mid]);
+                find(nums, l, mid - 2);
+                find(nums, mid + 2, r);
+            }else if(nums[mid - 1] <= nums[mid] && nums[mid] <= nums[mid + 1]){ // 递增
+                find(nums, l, mid - 2);
+                find(nums, mid, r);
+            }else if(nums[mid - 1] >= nums[mid] && nums[mid] >= nums[mid] + 1){ // 递减
+                find(nums, l, mid);
+                find(nums, mid + 2, r);
+            }
+        }
+    }
 
+    @Test
+    public void test(){
+        int[] nums = new int[]{1,2,1,3,5,6,4};
+        findPeakElement(nums);
     }
 }

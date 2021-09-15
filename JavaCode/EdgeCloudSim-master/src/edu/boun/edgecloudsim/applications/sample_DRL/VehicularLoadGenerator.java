@@ -57,7 +57,8 @@ public class VehicularLoadGenerator extends LoadGeneratorModel {
             ExponentialDistribution rng = new ExponentialDistribution(poissonMean); // 指数分布
             
             while (virtualTime < simulationTime){
-                double interval = rng.sample() * 80;
+                // ************************************************* 下面
+                double interval = rng.sample() * 30;
                 if(interval <= 0){
                     SimLogger.printLine("Impossible is occurred! interval is " + interval + " for device " + i + " time " + virtualTime);
                     continue;
