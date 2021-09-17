@@ -48,6 +48,12 @@ public class Main {
     @Test
     public void test(){
         int[] nums = new int[]{1,2,1,3,5,6,4};
+        StringBuilder sb = new StringBuilder();
+        char num = '9';
+        int a = Integer.parseInt(String.valueOf(num));
+        sb.deleteCharAt(sb.length() - 1);
+        Set<String> set = new HashSet<>();
+        set.contains()
         findPeakElement(nums);
     }
 }

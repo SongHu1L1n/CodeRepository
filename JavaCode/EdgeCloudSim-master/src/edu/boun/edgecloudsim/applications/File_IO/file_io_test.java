@@ -56,7 +56,8 @@ public class file_io_test {
     public void socket_with_python_test(){
         for(int j = 0; j < 100; j++){
             try {
-                Socket socket = new Socket("192.168.66.1",8989);
+                Socket socket = new Socket("192.168.66.1",8897);
+
                 // 向INFO传输基础信息
                 //******************************************************************************************************
                 File file = new File(info);
@@ -87,12 +88,23 @@ public class file_io_test {
                 }
                 //******************************************************************************************************
 
-
                 //获取输出流，向服务器端发送信息
                 OutputStream os = socket.getOutputStream();//字节输出流
                 PrintWriter pw = new PrintWriter(os);//将输出流包装为打印流
-                pw.write("我是Java客户端");
-                pw.flush();
+//                pw.write(String.valueOf(taskType));
+//                pw.flush();
+//                pw.write(String.valueOf(speed));
+//                pw.flush();
+//                pw.write(String.valueOf(wlan_up_and_down_load_delay));
+//                pw.flush();
+//                pw.write(String.valueOf(wan_up_and_down_load_delay));
+//                pw.flush();
+//                pw.write(String.valueOf(gsm_up_and_down_load_delay));
+//                pw.flush();
+//                pw.write(String.valueOf(expectedProcessingDelayOnEdge));
+//                pw.flush();
+//                pw.write(String.valueOf(expectedProcessingDelayOnCloud));
+//                pw.flush();
 //                System.out.println(1);
                 socket.shutdownOutput();//关闭输出流
 //                System.out.println(2);

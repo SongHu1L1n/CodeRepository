@@ -148,7 +148,7 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
 
             // 先建立通信连接, 再传输文件信息，传输完成，从socket接收结
             try {
-                Socket socket = new Socket("192.168.66.1",8989);
+                Socket socket = new Socket("192.168.66.1",7779);
                 // 向INFO传输基础信息
                 //******************************************************************************************************
                 String info = "E:\\CodeRepository\\JavaCode\\EdgeCloudSim-master\\scripts\\sample_DRL\\config\\info.txt";
