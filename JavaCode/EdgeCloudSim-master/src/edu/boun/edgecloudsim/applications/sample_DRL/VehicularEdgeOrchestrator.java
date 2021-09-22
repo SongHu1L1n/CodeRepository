@@ -98,7 +98,7 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
                 }
                 lastPercentage += probabilities[i];
             }
-//            System.out.println("任务类型" + task.getTaskType());
+
             if(!resultFound) {
                 SimLogger.printLine("Unexpected probability calculation for random orchestrator! Terminating simulation...");
                 System.exit(1);
@@ -108,11 +108,11 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
 
             double SPEED_ON_THE_ROAD[] = {20, 40, 60};
             // 任务延迟要求
-            double max_delay_require = SimSettings.getInstance().getTaskLookUpTable()[task.getTaskType()][13];
+            // double max_delay_require = SimSettings.getInstance().getTaskLookUpTable()[task.getTaskType()][13];
 
             //  task.getAssociatedHostId()
             //任务提交位置 task.getSubmittedLocation()
-            // System.out.println("任务的X坐标：" + task.getSubmittedLocation().getXPos());
+            //System.out.println("任务的X坐标：" + task.getSubmittedLocation().getXPos());
             //  SimManager.getInstance().getEdgeServerManager().getVmList(task.getSubmittedLocation().getPlaceTypeIndex());
 
             /*
@@ -148,7 +148,7 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
 
             // 先建立通信连接, 再传输文件信息，传输完成，从socket接收结
             try {
-                Socket socket = new Socket("192.168.66.1",7779);
+                Socket socket = new Socket("192.168.66.1",7789);
                 // 向INFO传输基础信息
                 //******************************************************************************************************
                 String info = "E:\\CodeRepository\\JavaCode\\EdgeCloudSim-master\\scripts\\sample_DRL\\config\\info.txt";
@@ -183,7 +183,7 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
                 //获取输出流，向服务器端发送信息
                 OutputStream os = socket.getOutputStream();//字节输出流
                 PrintWriter pw = new PrintWriter(os);//将输出流包装为打印流
-                pw.write("我是Java客户端");
+                pw.write("Java 开始Socket数据接收.......");
                 pw.flush();
                 socket.shutdownOutput();//关闭输出流
 

@@ -50,7 +50,7 @@ class Task2DEnv(gym.Env):
         input_file_size = [20, 40, 20]
         output_file_size = [20, 20, 80]
         f = [2, 10, 0]  # CPU频率
-
+        sensitivity = [0.5, 0.8, 0.25]
         reward = 0
         # 能量消耗
         if action == 0:
@@ -88,7 +88,7 @@ class Task2DEnv(gym.Env):
 
 if __name__ == '__main__':
     #
-    from stable_baselines import deepq
+    # from stable_baselines import deepq
     # from stable_baselines import PPO2
 
     # 接收基础参数，进行训练
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     import socket
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(("192.168.66.1", 7779))
+        sock.bind(("192.168.66.1", 7789))
         sock.listen(5)
         print("等待连接......")
     except:
@@ -135,59 +135,27 @@ if __name__ == '__main__':
         expected_processing_delay_on_cloud = eval(info_list[6])
         # *******************************************************
 
-
         conn.settimeout(30)
         # szBuf = conn.recv(1024)
         # print("recv:" + str(szBuf, 'utf8'))
-        '''
-        recv1 = str(conn.recv(1024), 'utf8')
-        print("recv1: ", recv1)
-        task_type = eval(recv1)
 
-        recv2 = str(conn.recv(1024), 'utf8')
-        print("recv2: ", recv2)
-        speed = eval(recv2)
-
-        recv3 = str(conn.recv(1024), 'utf8')
-        print("recv3: ", recv3)
-        wlan_up_and_down_load_delay = eval(recv3)
-
-        recv4 = str(conn.recv(1024), 'utf8')
-        print("recv4: ", recv4)
-        wan_up_and_down_load_delay = eval(recv4)
-
-        recv5 = str(conn.recv(1024), 'utf8')
-        print("recv5: ", recv5)
-        gsm_up_and_down_load_delay = eval(recv5)
-
-        recv6 = str(conn.recv(1024), 'utf8')
-        print("recv6: ", recv6)
-        expected_processing_delay_on_dge = eval(recv6)
-
-        recv7 = str(conn.recv(1024), 'utf8')
-        print("recv7: ", recv7)
-        expected_processing_delay_on_cloud = eval(recv7)
-
-        print(task_type, ", ", speed, ", ", wlan_up_and_down_load_delay, ", ", wan_up_and_down_load_delay, ", ",
-              gsm_up_and_down_load_delay, ", ", expected_processing_delay_on_dge, ", ",
-              expected_processing_delay_on_cloud)
-        # print("test: ", test)
-        '''
-        action = 0
         #
-        # # 模型训练
-        env = Task2DEnv(task_type, speed, wlan_up_and_down_load_delay, wan_up_and_down_load_delay, gsm_up_and_down_load_delay, expected_processing_delay_on_dge, expected_processing_delay_on_cloud)
-        model = deepq.DQN(policy='MlpPolicy', env=env)
-        model.learn(total_timesteps=10000)
-        obs = env.reset()
-        # action = -1
-        for _ in range(10):
-            _action, state = model.predict(observation=obs)
-            action = _action
-            obs, reward, done, information = env.step(_action)
-            env.render()
-        print("action : ", action)
+        # # # 模型训练
+        # env = Task2DEnv(task_type, speed, wlan_up_and_down_load_delay, wan_up_and_down_load_delay,
+        # gsm_up_and_down_load_delay, expected_processing_delay_on_dge, expected_processing_delay_on_cloud)
+        # model = deepq.DQN(policy='MlpPolicy', env=env)
+        # model.learn(total_timesteps=10000)
+        # obs = env.reset()
+        # # action = -1
+        # for _ in range(10):
+        #     _action, state = model.predict(observation=obs)
+        #     action = _action
+        #     obs, reward, done, information = env.step(_action)
+        #     env.render()
+        # print("action : ", action)
         # 得到训练结果， 传输回去
+        import random
+        action = random.randint(0, 3)
         if action == 0:
             result = 'EDGE_DATACENTER'
         elif action == 1:

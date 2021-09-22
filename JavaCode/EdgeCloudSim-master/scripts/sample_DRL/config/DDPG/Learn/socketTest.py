@@ -47,4 +47,6 @@ def another():
 
 
 if __name__ == '__main__':
-    another()
+    import random
+    for _ in range(10):
+        print(random.randint(0, 3))

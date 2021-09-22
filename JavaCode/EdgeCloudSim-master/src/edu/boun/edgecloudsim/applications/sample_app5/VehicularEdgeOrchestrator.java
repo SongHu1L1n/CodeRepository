@@ -348,7 +348,7 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
 			SimLogger.printLine("Unknow edge orchestrator policy! Terminating simulation...");
 			System.exit(1);
 		}
-
+		System.out.println("任务类型： " + task.getTaskType() + ", 实验敏感度%： " + SimSettings.getInstance().getTaskLookUpTable()[task.getTaskType()][12]);
 		return result;
 	}
 

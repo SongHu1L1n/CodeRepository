@@ -44,16 +44,38 @@ public class Main {
             }
         }
     }
+    public int lengthOfLongestSubstring(String s) {
+        if(s.length() < 1){
+            return 0;
+        }
+        int[] dp = new int[s.length()];
+        Map<Character, Integer> map = new HashMap<>();
+        dp[0] = 1;
+        map.put(s.charAt(0), 0);
+        int max = 1;
+        for(int i = 1; i < s.length(); i++){
+            if(!map.containsKey(s.charAt(i))){
+                dp[i] = dp[i - 1] + 1;
+                map.put(s.charAt(0), 1);
+            }else{
+                int last = map.get(s.charAt(i));
+                if(last < i - 1 - dp[i - 1] + 1){
+                    dp[i] = dp[i - 1] + 1;
+                }else if(last == i - 1 - dp[i - 1] + 1){
+                    dp[i] = dp[i - 1];
+                }else{
+                    dp[i] = i - last;
+                }
+            }
+            max = Math.max(max, dp[i]);
+            map.put(s.charAt(i), i);
+        }
+        return max;
+    }
 
     @Test
     public void test(){
-        int[] nums = new int[]{1,2,1,3,5,6,4};
-        StringBuilder sb = new StringBuilder();
-        char num = '9';
-        int a = Integer.parseInt(String.valueOf(num));
-        sb.deleteCharAt(sb.length() - 1);
-        Set<String> set = new HashSet<>();
-        set.contains()
-        findPeakElement(nums);
+        boolean[] use = new boolean[10];
+        System.out.println(use[0]);
     }
 }

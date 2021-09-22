@@ -11,18 +11,14 @@
 
 package edu.boun.edgecloudsim.applications.sample_app5;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-
-import org.cloudbus.cloudsim.CloudletSchedulerTimeShared;
-import org.cloudbus.cloudsim.Datacenter;
-import org.cloudbus.cloudsim.DatacenterCharacteristics;
-import org.cloudbus.cloudsim.Host;
-import org.cloudbus.cloudsim.Pe;
-import org.cloudbus.cloudsim.Storage;
-import org.cloudbus.cloudsim.VmAllocationPolicy;
-import org.cloudbus.cloudsim.VmSchedulerSpaceShared;
+import edu.boun.edgecloudsim.core.SimManager;
+import edu.boun.edgecloudsim.core.SimSettings;
+import edu.boun.edgecloudsim.edge_server.EdgeHost;
+import edu.boun.edgecloudsim.edge_server.EdgeServerManager;
+import edu.boun.edgecloudsim.edge_server.EdgeVM;
+import edu.boun.edgecloudsim.edge_server.EdgeVmAllocationPolicy_Custom;
+import edu.boun.edgecloudsim.utils.Location;
+import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.provisioners.BwProvisionerSimple;
 import org.cloudbus.cloudsim.provisioners.PeProvisionerSimple;
@@ -32,13 +28,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import edu.boun.edgecloudsim.core.SimManager;
-import edu.boun.edgecloudsim.core.SimSettings;
-import edu.boun.edgecloudsim.edge_server.EdgeHost;
-import edu.boun.edgecloudsim.edge_server.EdgeServerManager;
-import edu.boun.edgecloudsim.edge_server.EdgeVM;
-import edu.boun.edgecloudsim.edge_server.EdgeVmAllocationPolicy_Custom;
-import edu.boun.edgecloudsim.utils.Location;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 public class VehicularEdgeServerManager extends EdgeServerManager{
 	private int hostIdCounter;
@@ -120,7 +112,7 @@ public class VehicularEdgeServerManager extends EdgeServerManager{
 		int vmCounter = 0;
 
 		// for each datacenter...
-		for(int i= 0; i<localDatacenters.size(); i++) {
+		for(int i= 0; i < localDatacenters.size(); i++) {
 			List<? extends Host> list = localDatacenters.get(i).getHostList();
 			// for each host...
 			for (int hostIndex=0; hostIndex < list.size(); hostIndex++) {
