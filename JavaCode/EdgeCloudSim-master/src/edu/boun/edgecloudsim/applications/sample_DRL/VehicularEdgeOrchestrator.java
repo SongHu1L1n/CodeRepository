@@ -7,6 +7,7 @@ package edu.boun.edgecloudsim.applications.sample_DRL;
 //import edu.boun.edgecloudsim.applications.sample_app5.OrchestratorTrainerLogger;
 //import edu.boun.edgecloudsim.applications.sample_app5.VehicularNetworkModel;
 
+import edu.boun.edgecloudsim.applications.sample_app5.WekaWrapper;
 import edu.boun.edgecloudsim.core.SimManager;
 import edu.boun.edgecloudsim.core.SimSettings;
 import edu.boun.edgecloudsim.edge_client.Task;
@@ -104,8 +105,8 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
                 System.exit(1);
             }
 
-        }else if (policy.equals("DRL")){
-
+        }
+        else if (policy.equals("DRL")){
             double SPEED_ON_THE_ROAD[] = {20, 40, 60};
             // 任务延迟要求
             // double max_delay_require = SimSettings.getInstance().getTaskLookUpTable()[task.getTaskType()][13];
@@ -113,7 +114,6 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
             //  task.getAssociatedHostId()
             //任务提交位置 task.getSubmittedLocation()
             //System.out.println("任务的X坐标：" + task.getSubmittedLocation().getXPos());
-            //  SimManager.getInstance().getEdgeServerManager().getVmList(task.getSubmittedLocation().getPlaceTypeIndex());
 
             /*
             * 需要传输的数据:
@@ -136,8 +136,6 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
 //                    SimSettings.getInstance().getMipsForCloudVM() + ", expectedProcessingDelayOnCloud: "
 //                    + expectedProcessingDelayOnCloud + ", 手动测试结果: " + task.getCloudletLength() / SimSettings.getInstance().getMipsForCloudVM());
 //            System.out.println();
-
-//            SimSettings.getInstance().getTaskLookUpTable();
 //            SimManager.getInstance().getEdgeServerManager().getVmList(0).
 
             double[] expectedDelays = {
@@ -146,9 +144,42 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
                     gsmUploadDelay + gsmDownloadDelay + expectedProcessingDelayOnCloud
             };
 
+            /*
+            * ML
+            * */
+            WekaWrapper weka = WekaWrapper.getInstance();
+            boolean predictedResultForEdge = weka.handleClassification(EDGE_DATACENTER,
+                    new double[] {trainerLogger.getOffloadStat(EDGE_DATACENTER-1),
+                            task.getCloudletLength(), wlanUploadDelay,
+                            wlanDownloadDelay, avgEdgeUtilization});
+
+            boolean predictedResultForCloudViaRSU = weka.handleClassification(CLOUD_DATACENTER_VIA_RSU,
+                    new double[] {trainerLogger.getOffloadStat(CLOUD_DATACENTER_VIA_RSU-1),
+                            wanUploadDelay, wanDownloadDelay});
+
+            boolean predictedResultForCloudViaGSM = weka.handleClassification(CLOUD_DATACENTER_VIA_GSM,
+                    new double[] {trainerLogger.getOffloadStat(CLOUD_DATACENTER_VIA_GSM-1),
+                            gsmUploadDelay, gsmDownloadDelay});
+
+            double predictedServiceTimeForEdge = Double.MAX_VALUE;
+            double predictedServiceTimeForCloudViaRSU = Double.MAX_VALUE;
+            double predictedServiceTimeForCloudViaGSM = Double.MAX_VALUE;
+
+            if(predictedResultForEdge)
+                predictedServiceTimeForEdge = weka.handleRegression(EDGE_DATACENTER,
+                        new double[] {task.getCloudletLength(), avgEdgeUtilization});
+
+            if(predictedResultForCloudViaRSU)
+                predictedServiceTimeForCloudViaRSU = weka.handleRegression(CLOUD_DATACENTER_VIA_RSU,
+                        new double[] {task.getCloudletLength(), wanUploadDelay, wanDownloadDelay});
+
+            if(predictedResultForCloudViaGSM)
+                predictedServiceTimeForCloudViaGSM = weka.handleRegression(CLOUD_DATACENTER_VIA_GSM,
+                        new double[] {task.getCloudletLength(), gsmUploadDelay, gsmDownloadDelay});
+
             // 先建立通信连接, 再传输文件信息，传输完成，从socket接收结
             try {
-                Socket socket = new Socket("192.168.66.1",7789);
+                Socket socket = new Socket("192.168.66.1",8897);
                 // 向INFO传输基础信息
                 //******************************************************************************************************
                 String info = "E:\\CodeRepository\\JavaCode\\EdgeCloudSim-master\\scripts\\sample_DRL\\config\\info.txt";
@@ -168,11 +199,11 @@ public class VehicularEdgeOrchestrator extends EdgeOrchestrator {
                     FileWriter fw = new FileWriter(file);
                     fw.write(String.valueOf(taskType) + "\n");
                     fw.write(String.valueOf(speed) + "\n");
-                    fw.write(String.valueOf(wlan_up_and_down_load_delay) + "\n");
-                    fw.write(String.valueOf(wan_up_and_down_load_delay) + "\n");
-                    fw.write(String.valueOf(gsm_up_and_down_load_delay) + "\n");
-                    fw.write(String.valueOf(expectedProcessingDelayOnEdge) + "\n");
-                    fw.write(String.valueOf(expectedProcessingDelayOnCloud));
+                    fw.write(String.valueOf(predictedServiceTimeForEdge) + "\n");
+                    fw.write(String.valueOf(predictedServiceTimeForCloudViaRSU) + "\n");
+                    fw.write(String.valueOf(predictedServiceTimeForCloudViaGSM) + "\n");
+//                    fw.write(String.valueOf(expectedProcessingDelayOnEdge) + "\n");
+//                    fw.write(String.valueOf(expectedProcessingDelayOnCloud));
                     fw.flush();
                     fw.close();
                 } catch (IOException e) {

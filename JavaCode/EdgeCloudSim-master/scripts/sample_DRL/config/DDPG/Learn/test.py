@@ -11,8 +11,7 @@ class Task2DEnv(gym.Env):
         'video.frames_per_second': 2
     }
 
-    def __init__(self, task_type, speed, wlan_up_and_down_load_delay, wan_up_and_down_load_delay,
-                 gsm_up_and_down_load_delay, expected_processing_delay_on_edge, expected_processing_delay_on_cloud):
+    def __init__(self, task_type, speed, predictedServiceTimeForEdge, predictedServiceTimeForCloudViaRSU, predictedServiceTimeForCloudViaGSM):
         self.taskType = task_type
         self.speed = speed
 
@@ -21,15 +20,10 @@ class Task2DEnv(gym.Env):
             先放三种延迟，再放预计处理时间
         '''
 
-        self.wlan_up_and_down_load_delay = wlan_up_and_down_load_delay
-        self.expectedProcessingDelayOnEdge = expected_processing_delay_on_edge
+        self.service_time_for_edge = predictedServiceTimeForEdge
+        self.service_time_for_cloud_via_rsu = predictedServiceTimeForCloudViaRSU
+        self.service_time_for_cloud_via_gsm = predictedServiceTimeForCloudViaGSM
 
-        # Cloud_via_RSU
-        self.wan_up_and_down_load_delay = wan_up_and_down_load_delay
-        self.expectedProcessingDelayOnCloud = expected_processing_delay_on_cloud
-
-        # Cloud_via_GSM
-        self.gsm_up_and_down_load_delay = gsm_up_and_down_load_delay
 
         self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Discrete(2)
@@ -43,7 +37,7 @@ class Task2DEnv(gym.Env):
         '''
 
         # 已知信息
-        required_max_delay = [0.5, 1.0, 1.5]  # 三个任务的最大延迟要求
+        required_max_delay = [1.0, 0.5, 1.5]  # 三个任务的最大延迟要求
         bandwidth = [10, 50, 20]  # 带宽       edge rsu  gsm 根据action选择
         # costs = [0.5, 1, 1]
         storage = [125000, 2500000, 2500000]  # VM存储
@@ -54,27 +48,26 @@ class Task2DEnv(gym.Env):
         reward = 0
         # 能量消耗
         if action == 0:
-            # 能量消耗
-            E = f[0] * self.expectedProcessingDelayOnEdge + bandwidth[0] * self.wlan_up_and_down_load_delay
-            # 费用消耗 占比
-            # M = self.expectedProcessingDelayOnEdge * self.edgeUtilization * storage[0]
-            F = storage[0] / (storage[0] - (input_file_size[self.taskType] + output_file_size[self.taskType] * 1024))  # 计算资源使用率
-            delay = self.expectedProcessingDelayOnEdge + self.wlan_up_and_down_load_delay
+            delay = self.service_time_for_edge
         elif action == 1:
-            E = f[1] * self.expectedProcessingDelayOnCloud + bandwidth[1] * self.wan_up_and_down_load_delay
-            F = storage[1] / (storage[1] - (input_file_size[self.taskType] + output_file_size[self.taskType] * 1024))
-            delay = self.expectedProcessingDelayOnCloud + self.wan_up_and_down_load_delay
+            delay = self.service_time_for_cloud_via_rsu
         else:
-            E = f[2] * self.expectedProcessingDelayOnEdge + bandwidth[0] * self.gsm_up_and_down_load_delay
-            F = storage[2] / (storage[2] - (input_file_size[self.taskType] + output_file_size[self.taskType] * 1024))
-            delay = self.expectedProcessingDelayOnCloud + self.gsm_up_and_down_load_delay
+            delay = self.service_time_for_cloud_via_gsm
         # speed快 选择云
+        '''
+        '''
+        if delay < required_max_delay[self.taskType]:
+            QoE = 1
+        elif delay > 2 * required_max_delay[self.taskType]:
+            QoE = 0
+        else:
+            QoE = (1 - (delay - required_max_delay[self.taskType]) / required_max_delay[self.taskType]) * (1 - sensitivity[self.taskType])
+        c = sensitivity[self.taskType] * self.speed / 100
 
         W = (required_max_delay[self.taskType] - delay) / required_max_delay[self.taskType]
-        Q = F * W
         # self.state = np.array([np.array(Q), np.array(self.speed)])
-        self.state = Q
-        return W, Q, True, {}  # 是否结束当前episode, 及调试信息
+        self.state = W
+        return self.speed, QoE, True, {}  # 是否结束当前episode, 及调试信息
 
     def reset(self):
         return self.state
@@ -88,7 +81,7 @@ class Task2DEnv(gym.Env):
 
 if __name__ == '__main__':
     #
-    # from stable_baselines import deepq
+    from stable_baselines import deepq
     # from stable_baselines import PPO2
 
     # 接收基础参数，进行训练
@@ -99,7 +92,7 @@ if __name__ == '__main__':
     import socket
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(("192.168.66.1", 7789))
+        sock.bind(("192.168.66.1", 8897))
         sock.listen(5)
         print("等待连接......")
     except:
@@ -128,34 +121,47 @@ if __name__ == '__main__':
         # 更新参数
         task_type = eval(info_list[0])
         speed = eval(info_list[1])
-        wlan_up_and_down_load_delay = eval(info_list[2])
-        wan_up_and_down_load_delay = eval(info_list[3])
-        gsm_up_and_down_load_delay = eval(info_list[4])
-        expected_processing_delay_on_dge = eval(info_list[5])
-        expected_processing_delay_on_cloud = eval(info_list[6])
+        predictedServiceTimeForEdge = eval(info_list[2])
+        predictedServiceTimeForCloudViaRSU = eval(info_list[3])
+        predictedServiceTimeForCloudViaGSM = eval(info_list[4])
+
         # *******************************************************
 
         conn.settimeout(30)
-        # szBuf = conn.recv(1024)
-        # print("recv:" + str(szBuf, 'utf8'))
+        szBuf = conn.recv(1024)
+        print("recv:" + str(szBuf, 'utf8'))
+
+        '''
+            ***********************************************
+        '''
 
         #
         # # # 模型训练
-        # env = Task2DEnv(task_type, speed, wlan_up_and_down_load_delay, wan_up_and_down_load_delay,
-        # gsm_up_and_down_load_delay, expected_processing_delay_on_dge, expected_processing_delay_on_cloud)
-        # model = deepq.DQN(policy='MlpPolicy', env=env)
-        # model.learn(total_timesteps=10000)
-        # obs = env.reset()
-        # # action = -1
-        # for _ in range(10):
-        #     _action, state = model.predict(observation=obs)
-        #     action = _action
-        #     obs, reward, done, information = env.step(_action)
-        #     env.render()
-        # print("action : ", action)
+        env = Task2DEnv(task_type, speed, predictedServiceTimeForEdge, predictedServiceTimeForCloudViaRSU, predictedServiceTimeForCloudViaGSM)
+        model = deepq.DQN(policy='MlpPolicy', env=env)
+        model.learn(total_timesteps=10000)
+        obs = env.reset()
+        # action = -1
+        for _ in range(10):
+            _action, state = model.predict(observation=obs)
+            action = _action
+            obs, reward, done, information = env.step(_action)
+            env.render()
+        print("action : ", action)
         # 得到训练结果， 传输回去
-        import random
-        action = random.randint(0, 3)
+        # sensitivity = [0.5, 0.8, 0.25]
+        # c = speed / 100 * sensitivity[task_type]
+        # required_max_delay = [0.5, 1, 1.5]
+        # edge_process_time = wlan_up_and_down_load_delay + expected_processing_delay_on_edge
+        # cloud_rsu_process_time = wan_up_and_down_load_delay + expected_processing_delay_on_cloud
+        # cloud_gsm_process_time = gsm_up_and_down_load_delay + expected_processing_delay_on_cloud
+        # if edge_process_time < required_max_delay[task_type] and c <= 0.16:
+        #     action = 0
+        # elif c > 0.16 and c < 0.3:
+        #     action = 1
+        # else:
+        #     action = 2
+
         if action == 0:
             result = 'EDGE_DATACENTER'
         elif action == 1:

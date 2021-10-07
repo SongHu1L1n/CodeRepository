@@ -73,9 +73,58 @@ public class Main {
         return max;
     }
 
-    @Test
-    public void test(){
-        boolean[] use = new boolean[10];
-        System.out.println(use[0]);
+   @Test
+   public void test(){
+       int[] nums = {3, 1, 3, 1, 1};
+       minSessions(nums, 8);
+
+
+
+   }
+    public int minSessions(int[] tasks, int sessionTime) {
+        int n = tasks.length;
+        Arrays.sort(tasks);
+        int cnt = 0;
+        int l = 0, r = n - 1;
+        while(tasks[r] == sessionTime){
+            cnt++;
+            r--;
+        }
+        while(l <= r){
+            if(l == r){
+                return cnt+1;
+            }
+            int curSum = tasks[l] + tasks[r];
+            if(curSum == sessionTime){
+                cnt++;
+                l ++;
+                r--;
+            }else if(curSum > sessionTime){
+                r--;
+                cnt++;
+            }else{
+                int tmp = curSum;
+                int left = l, right = r;
+                while(left < right && tmp + tasks[--right] <= sessionTime){
+                    tmp += tasks[right];
+                }
+                while(left < right && tmp + tasks[++left] <= sessionTime){
+                    tmp += tasks[left];
+                }
+                cnt++;
+                l = left;
+                r = right;
+            }
+
+        }
+        return cnt;
+    }
+
+
+
+    void swap(int[] nums, int i, int j){
+        int tmp = nums[i];
+        nums[i] = nums[j];
+        nums[j] = tmp;
     }
 }

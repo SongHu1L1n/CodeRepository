@@ -58,7 +58,7 @@ public class VehicularLoadGenerator extends LoadGeneratorModel {
             
             while (virtualTime < simulationTime){
                 // ************************************************* 下面
-                double interval = rng.sample() * 20;
+                double interval = rng.sample() * 80;
                 if(interval <= 0){
                     SimLogger.printLine("Impossible is occurred! interval is " + interval + " for device " + i + " time " + virtualTime);
                     continue;
